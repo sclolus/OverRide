@@ -1,0 +1,1 @@
+echo '5276' > answer && cat answer - | ./level00

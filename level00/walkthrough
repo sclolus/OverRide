@@ -1,0 +1,23 @@
+This block calls a shell for us:
+0x080484ee      c70424398604.  mov dword [esp], str.Authenticated    ; "\nAuthenticated!"
+0x080484f5      e896feffff     call sym.imp.puts
+0x080484fa      c70424498604.  mov dword [esp], str.bin_sh
+0x08048501      e89afeffff     call sym.imp.system
+0x08048506      b800000000     mov eax, 0
+0x0804850b      eb11           jmp 0x804851e
+
+This branch is reached if this condition is met:
+0x080484e3      8b44241c       mov eax, dword [value]
+0x080484e7      3d9c140000     cmp eax, 0x149c
+0x080484ec      751f           jne 0x804850d
+
+That is if int parsed by the block is 5276 (0x149c):
+b836860408     mov eax, 0x8048636
+8d54241c       lea edx, [value]
+89542404       mov dword [arg1], edx
+890424         mov dword [esp], eax
+e8edfeffff     call sym.imp.__isoc99_scanf ;[3] ; int scanf(const char *format)
+which is equivalent to "scanf("%d", &value);"
+Scanf parsed on standard input, so:
+echo '5276' > /tmp/answer && cat /tmp/answer - | ./level00
+And we got a SUID-shell
