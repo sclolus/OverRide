@@ -1,0 +1,37 @@
+#include <stdio.h>
+#include <unistd.h>
+#include <stdint.h>
+#include <stdlib.h>
+
+int main(void)
+{
+	int32_t	i = 0;
+	char	format[100];
+
+	fgets(format, 100, stdin);
+
+	i = 0;
+	while (42) {
+		int32_t	len = 0;
+
+		for (; format[len]; len++)
+			;
+		if (i >= len) {
+			printf(format);
+			exit(0);
+		} else {
+			if (format[i] <= '@') {
+				goto end_loop;
+			} else {
+				if (format[i] > 'Z') {
+					goto end_loop;
+				} else {
+					format[i] = format[i] ^ 0x20;
+					goto end_loop;
+				}
+			}
+		}
+	end_loop:
+		i++;
+	}
+}
