@@ -1,0 +1,3 @@
+We can see that the parent ptrace the child so that if execve (0xb) is called, the parent pkills the child.
+
+We can then just write a shellcode that chmod("/home/users/level05/", 0o777) and inject it via the gets call in the child

