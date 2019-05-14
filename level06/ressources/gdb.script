@@ -1,0 +1,5 @@
+layout asm
+set disassembly-flavor intel
+b *0x08048866
+run <./input
+i r

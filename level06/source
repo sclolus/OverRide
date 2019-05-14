@@ -1,0 +1,99 @@
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/ptrace.h>
+#include <stdint.h>
+#include <string.h>
+
+int auth(char *s, int32_t serial)
+{
+	uint32_t	    var_10h;
+	int32_t		    var_14h;
+	int32_t		    len;
+	register int	    ret; // originally a register
+
+	s[strcspn(s, "\n")] = 0;
+	len = strnlen(s, 32);
+	if (len <= 5) {
+		ret = 1;
+		goto exit;
+	}
+
+	if (ptrace(0, 1, 0, 0) != -1) {
+		var_10h = s[3] ^ 0x1337 + 0x5eeded;
+		var_14h = 0;
+	somelabel:
+		if (var_14h < len) {
+			if (s[var_14h] > 0x1f) {
+				uint32_t eax, ecx, edx;
+
+				eax = s[var_14h];
+				ecx = eax;
+				ecx ^= var_10h;
+				edx = 0x88233b2b;
+				eax = ecx;
+				/* eax *= edx; useless*/
+				/* eax = ecx; useless */
+				eax -= edx;
+				eax >>= 1;
+				eax += edx;
+				eax >>= 10;
+				eax *= 0x539;
+
+				edx = ecx;
+				edx -= eax;
+				eax = edx;
+
+				var_10h += eax;
+				var_14h += 1;
+				goto somelabel;
+			} else {
+				ret = 1;
+				goto exit;
+			}
+		} else {
+			if (serial == var_10h) {
+				ret = 0;
+			} else {
+				ret = 1;
+			}
+			goto exit; // useless
+		}
+	} else {
+		puts("\x1b[32m.---------------------------.");
+		puts("\x1b[31m| !! TAMPERING DETECTED !!  |");
+		puts("\x1b[32m'---------------------------'");
+		ret = 1;
+		goto exit;
+	}
+
+exit:
+	return ret;
+}
+
+int main(int argc, char **argv)
+{
+	char	    buffer[32];
+	int32_t	    serial;
+	int32_t	    var_1ch;
+
+	puts("***********************************");
+	puts("*\t\tlevel06\t\t  *");
+	puts("***********************************");
+
+	printf("-> Enter Login: ");
+	fgets(buffer, 32, stdin);
+	puts("***********************************");
+	puts("***** NEW ACCOUNT DETECTED ********");
+	puts("***********************************");
+	printf("-> Enter Serial: ");
+
+	scanf("%u", &serial);
+	if (auth(buffer, serial)) {
+		return (1);
+	} else {
+		puts("Authenticated!");
+		system("/bin/sh");
+		return (0);
+	}
+}

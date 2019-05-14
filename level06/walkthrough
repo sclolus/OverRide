@@ -1,0 +1,8 @@
+okay, input to stdin of ./level06 a first line "aaaaaa"
+then a number (which does not matter for now);
+
+Now in auth(), lots of computations take place but that's ok.
+there is a ptrace preventing us of going at the end of the computation to check the value which is used to check our second line (which is a password).
+However nothing is preventing us from copying the binary and modifying the copy.
+So go change the 0x75 of the conditional jump after ptrace in auth by 0x74. (This inverts the condition).
+And now make a breakpoint at the end condition of the algorithm to get our value, then insert it as second input line in decimal. and you've got a SUID shell.
