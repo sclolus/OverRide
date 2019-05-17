@@ -6,7 +6,7 @@ then
 	exit 1;
 fi
 
-LEVELS=(level0 level1 level2 level3 level4 level5 level6 level7 level8 level9 bonus0 bonus1 bonus2 bonus3)
+LEVELS=(level00 level01 level02 level03 level04 level05 level06 level07 level08 level09)
 
 for level in {0..14}
 do

@@ -30,4 +30,4 @@ then
 	exit 1;
 fi
 
-cat $PROJECT_PATH/$PREVIOUS_LEVEL/flag | pbcopy; scp -P 4242 $1 $CURRENT_LEVEL@$VM_IP:/home/user/$CURRENT_LEVEL/$(basename $1)
+cat $PROJECT_PATH/$PREVIOUS_LEVEL/flag | pbcopy; scp -P 4242 $1 $CURRENT_LEVEL@$VM_IP:/home/users/$CURRENT_LEVEL/$(basename $1)
