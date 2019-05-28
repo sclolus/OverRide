@@ -44,7 +44,7 @@ int32_t	store_number(int arg_8h)
 	uint32_t ecx, eax, edx;
 
 	ecx = uval_2;
-	edx = 0xaaaaaaab;
+	edx = 0xaaaaaaab; /* 0b101010101010101 */
 	eax = ecx;
 	edx = (uint32_t)(((uint64_t)eax * (uint64_t)edx) >> 32);
 	edx >>= 1; // edx /= 2
@@ -54,7 +54,7 @@ int32_t	store_number(int arg_8h)
 	eax *= 3;
 	edx = ecx;
 	edx -= eax;
-	if (edx == 0) {
+	if (edx != 0) {
 		if ((uval_1 >> 0x18) != 0xb7) {
 			*(uint32_t*)(uval_2 * 4 + arg_8h) = uval_1;
 			return 0;
