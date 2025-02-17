@@ -1,23 +1,35 @@
 This block calls a shell for us:
-0x080484ee      c70424398604.  mov dword [esp], str.Authenticated    ; "\nAuthenticated!"
-0x080484f5      e896feffff     call sym.imp.puts
-0x080484fa      c70424498604.  mov dword [esp], str.bin_sh
-0x08048501      e89afeffff     call sym.imp.system
-0x08048506      b800000000     mov eax, 0
-0x0804850b      eb11           jmp 0x804851e
+ 80484ee:	c7 04 24 39 86 04 08 	mov    DWORD PTR [esp],0x8048639
+ 80484f5:	e8 96 fe ff ff       	call   8048390 <puts@plt>
+ 80484fa:	c7 04 24 49 86 04 08 	mov    DWORD PTR [esp],0x8048649
+ 8048501:	e8 9a fe ff ff       	call   80483a0 <system@plt>
+ 8048506:	b8 00 00 00 00       	mov    eax,0x0
 
 This branch is reached if this condition is met:
-0x080484e3      8b44241c       mov eax, dword [value]
-0x080484e7      3d9c140000     cmp eax, 0x149c
-0x080484ec      751f           jne 0x804850d
+ 80484e3:	8b 44 24 1c          	mov    eax,DWORD PTR [esp+0x1c]
+ 80484e7:	3d 9c 14 00 00       	cmp    eax,0x149c
+ 80484ec:	75 1f                	jne    804850d <main+0x79>
 
-That is if int parsed by the block is 5276 (0x149c):
-b836860408     mov eax, 0x8048636
-8d54241c       lea edx, [value]
-89542404       mov dword [arg1], edx
-890424         mov dword [esp], eax
-e8edfeffff     call sym.imp.__isoc99_scanf ;[3] ; int scanf(const char *format)
+That is if the int parsed by this block is 5276 (0x149c):
+ 80484ce:	b8 36 86 04 08       	mov    eax,0x8048636
+ 80484d3:	8d 54 24 1c          	lea    edx,[esp+0x1c]
+ 80484d7:	89 54 24 04          	mov    DWORD PTR [esp+0x4],edx
+ 80484db:	89 04 24             	mov    DWORD PTR [esp],eax
+ 80484de:	e8 ed fe ff ff       	call   80483d0 <__isoc99_scanf@plt>
 which is equivalent to "scanf("%d", &value);"
 Scanf parsed on standard input, so:
 echo '5276' > /tmp/answer && cat /tmp/answer - | ./level00
 And we got a SUID-shell
+
+level00@OverRide:~$ echo '5276' > /tmp/answer && cat /tmp/answer - | ./level00
+***********************************
+* 	     -Level00 -		  *
+***********************************
+Password:
+Authenticated!
+whoami
+level01
+cd /home/users/level01
+cat .pass
+uSq2ehEGT6c9S24zbshexZQBXUGrncxn5sD5QfGL
+
