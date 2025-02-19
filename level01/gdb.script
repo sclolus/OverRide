@@ -1,4 +1,0 @@
-set disassembly-flavor intel
-layout asm
-break main
-run < input

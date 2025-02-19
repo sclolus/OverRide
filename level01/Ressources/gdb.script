@@ -1,0 +1,6 @@
+set disassembly-flavor intel
+layout asm
+b *0x80485b4
+run < /tmp/input
+x/20x $esp
+

