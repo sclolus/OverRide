@@ -1,0 +1,4 @@
+#!/bin/bash
+
+echo '%p %p %p %p %p %p %p %p'
+echo AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
